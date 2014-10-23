@@ -1,0 +1,28 @@
+{
+  "name"        : "cti/mongo-service-bundle",
+  "type"        : "symfony-bundle",
+  "description" : "Symfony bundle supplying Mongo service utilities to be reused across various applications",
+  "keywords"    : [ "mongo", "mongo service" ],
+  "license"     : "MIT",
+  "homepage"    : "https://github.com/lolaent/mongo-service-bundle",
+  "authors"     : [
+    {
+      "name"  : "Georgiana Gligor",
+      "email" : "gb@tekkie.ro"
+    },
+    {
+      "name"  : "Alex Cos",
+      "email" : "alexandru.cos@cloudtroopers.com"
+    }
+  ],
+  "require" : {
+    "php"                : ">=5.3.0"
+  },
+  "require-dev" : {
+    "phpunit/phpunit" : "4.2.*"
+  },
+  "autoload" : {
+    "psr-0": { "CTI\\MongoServiceBundle": "" }
+  },
+  "target-dir" : "CTI/MongoServiceBundle"
+}
