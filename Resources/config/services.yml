@@ -1,0 +1,13 @@
+parameters:
+  cti_mongo_service.client.class : CTI\MongoServiceBundle\MongoService
+  cti_mongo_service.manager.class : CTI\MongoServiceBundle\MongoManager
+
+services:
+
+  cti_mongo_service.client:
+    class: %cti_mongo_service.client.class%
+    arguments: [%mongo_url%, %mongo_retries%]
+
+  cti_mongo_service.manager:
+    class : %mongo_manager.class%
+    arguments : [ @cti_mongo_service.client, %mongo_db%, %mongo_coll% ]
