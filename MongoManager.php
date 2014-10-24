@@ -6,12 +6,13 @@ use JMS\Serializer\SerializerBuilder;
 use CTI\MongoService\Exception\MongoException;
 
 /**
- * Class MongoManager
+ * Manages data which uses MongoDB as persistent storage.
  *
- * @package CTI\MongoServiceBundle\Services
- * @author Alexandru Marius Cos  <alexandru.cos@cloudtroopers.ro>
+ * @package CTI\MongoServiceBundle
+ * @author  Alexandru Marius Cos <alexandru.cos@cloudtroopers.ro>
+ * @author  Georgiana Gligor     <g@lolaent.com>
  */
-class MongoManager
+class MongoManager implements CrudInterface
 {
     /** @var  MongoService */
     protected $client;
@@ -102,7 +103,7 @@ class MongoManager
      *
      * @throws MongoException
      */
-    public function find($criteria = array(), $fields = array())
+    public function read(array $criteria = array(), $fields = array())
     {
         $i = 0;
         $retries = $this->client->getRetries();
@@ -126,6 +127,8 @@ class MongoManager
     }
 
     /**
+     * TODO fix after implementing CrudInterface
+     *
      * @param array $criteria
      *
      * @return mixed
@@ -160,17 +163,17 @@ class MongoManager
      * Saves $object into mongo, either by inserting or updating
      *
      * @param array       $criteria
-     * @param array|mixed $object   must either be an array or a JMS serializable entity
+     * @param array|mixed $item   must either be an array or a JMS serializable entity
      *
      * @throws MongoException
      */
-    public function save($criteria, $object)
+    public function upsert($item, array $criteria = array())
     {
-        if (!is_array($object)) {
+        if (!is_array($item)) {
             try {
                 $serializer = SerializerBuilder::create()->build();
-                $json = $serializer->serialize($object, 'json');
-                $object = json_decode($json, true);
+                $json = $serializer->serialize($item, 'json');
+                $item = json_decode($json, true);
             } catch (\Exception $e) {
                 throw new MongoException('The $object parameter must be an array or a JMS serializable entity', null, $e);
             }
@@ -183,7 +186,7 @@ class MongoManager
                 $this->client->getClient()
                     ->selectDB($this->getDatabase())
                     ->selectCollection($this->getCollection())
-                    ->update($criteria, $object, array('upsert' => true));
+                    ->update($criteria, $item, array('upsert' => true));
 
                 break;
             } catch (\Exception $e) {
@@ -194,5 +197,28 @@ class MongoManager
             }
         }
     }
+
+    /**
+     * TODO add implementation
+     *
+     * @param object $item
+     * @param array  $criteria
+     */
+    public function create($item, array $criteria = array()) {}
+
+    /**
+     * TODO add implementation
+     *
+     * @param object $item
+     * @param array  $criteria
+     */
+    public function update($item, array $criteria = array()) {}
+
+    /**
+     * TODO add implementation
+     *
+     * @param object $item
+     */
+    public function delete($item) {}
 
 }

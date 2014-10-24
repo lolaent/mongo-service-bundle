@@ -7,7 +7,7 @@ use CTI\MongoService\Exception\ConnectionException;
 /**
  * Mongo client offering a retry mechanism for connections
  *
- * @package CTI\MongoServiceBundle\Services
+ * @package CTI\MongoServiceBundle
  * @author  Georgiana Gligor <g@lolaent.com>
  */
 class MongoService
