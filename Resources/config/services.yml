@@ -2,6 +2,11 @@ parameters:
   cti_mongo_service.client.class : CTI\MongoServiceBundle\MongoService
   cti_mongo_service.manager.class : CTI\MongoServiceBundle\MongoManager
 
+  mongo_retries: 5
+  mongo_url: dummy_mongo_url
+  mongo_db: dummy_mongo_db
+  mongo_coll: dummy_mongo_coll
+
 services:
 
   cti_mongo_service.client:
