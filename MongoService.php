@@ -2,7 +2,7 @@
 
 namespace CTI\MongoServiceBundle;
 
-use CTI\MongoService\Exception\ConnectionException;
+use CTI\MongoServiceBundle\Exception\ConnectionException;
 
 /**
  * Mongo client offering a retry mechanism for connections

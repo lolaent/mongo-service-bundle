@@ -9,5 +9,5 @@ services:
     arguments: [%mongo_url%, %mongo_retries%]
 
   cti_mongo_service.manager:
-    class : %mongo_manager.class%
+    class : %cti_mongo_service.manager.class%
     arguments : [ @cti_mongo_service.client, %mongo_db%, %mongo_coll% ]

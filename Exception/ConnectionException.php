@@ -1,6 +1,6 @@
 <?php
 
-namespace CTI\MongoService\Exception;
+namespace CTI\MongoServiceBundle\Exception;
 
 /**
  * Unable to connect to Mongo

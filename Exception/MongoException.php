@@ -1,6 +1,6 @@
 <?php
 
-namespace CTI\MongoService\Exception;
+namespace CTI\MongoServiceBundle\Exception;
 
 /**
  * Encapsulates Mongo problems

@@ -3,7 +3,7 @@
 namespace CTI\MongoServiceBundle;
 
 use JMS\Serializer\SerializerBuilder;
-use CTI\MongoService\Exception\MongoException;
+use CTI\MongoServiceBundle\Exception\MongoException;
 
 /**
  * Manages data which uses MongoDB as persistent storage.
