@@ -4,6 +4,7 @@ namespace CTI\MongoServiceBundle;
 
 use JMS\Serializer\SerializerBuilder;
 use CTI\MongoServiceBundle\Exception\MongoException;
+use TeeSnap\CoreBundle\Interfaces\LastUpdated;
 
 /**
  * Manages data which uses MongoDB as persistent storage.
@@ -162,8 +163,8 @@ class MongoManager implements CrudInterface
     /**
      * Saves $object into mongo, either by inserting or updating
      *
-     * @param array       $criteria
-     * @param array|mixed $item   must either be an array or a JMS serializable entity
+     * @param array|mixed $item     must either be an array or a JMS serializable entity
+     * @param array       $criteria update criteria
      *
      * @throws MongoException
      */
@@ -173,10 +174,16 @@ class MongoManager implements CrudInterface
             try {
                 $serializer = SerializerBuilder::create()->build();
                 $json = $serializer->serialize($item, 'json');
-                $item = json_decode($json, true);
+                $dataAsArray = json_decode($json, true);
             } catch (\Exception $e) {
                 throw new MongoException('The $object parameter must be an array or a JMS serializable entity', null, $e);
             }
+        } else {
+            $dataAsArray = json_decode($item);
+        }
+
+        if ($item instanceof LastUpdated) {
+            $dataAsArray['lastUpdated'] = new \MongoDate($item->getLastUpdated()->getTimestamp());
         }
 
         $i = 0;
@@ -186,7 +193,7 @@ class MongoManager implements CrudInterface
                 $this->client->getClient()
                     ->selectDB($this->getDatabase())
                     ->selectCollection($this->getCollection())
-                    ->update($criteria, $item, array('upsert' => true));
+                    ->update($criteria, $dataAsArray, array('upsert' => true));
 
                 break;
             } catch (\Exception $e) {
