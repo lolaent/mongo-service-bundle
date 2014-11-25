@@ -12,6 +12,8 @@ use CTI\MongoServiceBundle\Exception\ConnectionException;
  */
 class MongoService
 {
+    const MONGO_PREFIX = 'mongodb://';
+
     /** @var  \MongoClient */
     protected $client;
 
@@ -19,12 +21,27 @@ class MongoService
     protected $retries;
 
     /**
-     * @param string  $mongoUrl
-     * @param integer $retries
+     * @param string $host
+     * @param string $port
+     * @param string $db
+     * @param string $user
+     * @param string $pass
+     * @param string $retries
+     *
+     * @throws ConnectionException
      */
-    public function __construct($mongoUrl, $retries)
+    public function __construct($host, $port, $db, $user, $pass, $retries)
     {
         $this->retries = $retries;
+
+        $mongoUrl = self::MONGO_PREFIX;
+
+        if (!empty($user) && !empty($pass)) {
+            $mongoUrl .= sprintf('%s:%s@', $user, $pass);
+        }
+
+        $mongoUrl .= sprintf('%s:%s/%s', $host, $port, $db);
+
         $this->connect($mongoUrl, $retries);
     }
 
