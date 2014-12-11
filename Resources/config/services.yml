@@ -4,6 +4,10 @@ parameters:
 
   mongo_retries: 5
   mongo_url: dummy_mongo_url
+  mongo_host: dummy_mongo_host
+  mongo_port: dummy_mongo_port
+  mongo_user:
+  mongo_pass:
   mongo_db: dummy_mongo_db
   mongo_coll: dummy_mongo_coll
 
@@ -11,7 +15,7 @@ services:
 
   cti_mongo_service.client:
     class: %cti_mongo_service.client.class%
-    arguments: [%mongo_url%, %mongo_retries%]
+    arguments: [%mongo_host%, %mongo_port%, %mongo_db%, %mongo_user%, %mongo_pass%, %mongo_retries%]
 
   cti_mongo_service.manager:
     class : %cti_mongo_service.manager.class%

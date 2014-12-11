@@ -2,9 +2,9 @@
 
 namespace CTI\MongoServiceBundle;
 
+use CTI\MongoServiceBundle\Interfaces\LastUpdated;
 use JMS\Serializer\SerializerBuilder;
 use CTI\MongoServiceBundle\Exception\MongoException;
-use TeeSnap\CoreBundle\Interfaces\LastUpdated;
 
 /**
  * Manages data which uses MongoDB as persistent storage.
