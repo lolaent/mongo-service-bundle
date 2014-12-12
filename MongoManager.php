@@ -5,6 +5,7 @@ namespace CTI\MongoServiceBundle;
 use CTI\MongoServiceBundle\Interfaces\LastUpdated;
 use JMS\Serializer\SerializerBuilder;
 use CTI\MongoServiceBundle\Exception\MongoException;
+use Tc\Crud\CrudInterface;
 
 /**
  * Manages data which uses MongoDB as persistent storage.
@@ -168,7 +169,7 @@ class MongoManager implements CrudInterface
      *
      * @throws MongoException
      */
-    public function upsert($item, array $criteria = array())
+    public function upsert($item= NULL, array $criteria = array())
     {
         if (!is_array($item)) {
             try {
@@ -211,7 +212,7 @@ class MongoManager implements CrudInterface
      * @param object $item
      * @param array  $criteria
      */
-    public function create($item, array $criteria = array()) {}
+    public function create($item = NULL, array $criteria = array()) {}
 
     /**
      * TODO add implementation
