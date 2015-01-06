@@ -162,7 +162,7 @@ class MongoManager implements CrudInterface
     }
 
     /**
-     * Saves $object into mongo, either by inserting or updating
+     * Saves $item into mongo, either by inserting or updating
      *
      * @param array|mixed $item     must either be an array or a JMS serializable entity
      * @param array       $criteria update criteria
@@ -171,13 +171,13 @@ class MongoManager implements CrudInterface
      */
     public function upsert($item= NULL, array $criteria = array())
     {
-        if (!is_array($item)) {
+        if (!is_string($item)) {
             try {
                 $serializer = SerializerBuilder::create()->build();
                 $json = $serializer->serialize($item, 'json');
                 $dataAsArray = json_decode($json, true);
             } catch (\Exception $e) {
-                throw new MongoException('The $object parameter must be an array or a JMS serializable entity', null, $e);
+                throw new MongoException('The $item parameter must be an array or a JMS serializable entity', null, $e);
             }
         } else {
             $dataAsArray = json_decode($item);
