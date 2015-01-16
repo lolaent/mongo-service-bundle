@@ -217,10 +217,35 @@ class MongoManager implements CrudInterface
     /**
      * TODO add implementation
      *
-     * @param object $item
-     * @param array  $criteria
+     * @param array $item
+     * @param array $criteria
+     *
+     * @throws MongoException
      */
-    public function update($item, array $criteria = array()) {}
+    public function update($item, array $criteria = array())
+    {
+        if ($item instanceof LastUpdated) {
+            $dataAsArray['lastUpdated'] = new \MongoDate($item->getLastUpdated()->getTimestamp());
+        }
+
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $this->client->getClient()
+                    ->selectDB($this->getDatabase())
+                    ->selectCollection($this->getCollection())
+                    ->update($criteria, $item);
+
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
+                }
+            }
+        }
+    }
 
     /**
      * TODO add implementation
