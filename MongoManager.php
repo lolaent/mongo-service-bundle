@@ -224,6 +224,10 @@ class MongoManager implements CrudInterface
      */
     public function update($item, array $criteria = array())
     {
+        if (!is_array($item)) {
+            throw new MongoException(sprintf('$item parameter must be an array'));
+        }
+
         if ($item instanceof LastUpdated) {
             $dataAsArray['lastUpdated'] = new \MongoDate($item->getLastUpdated()->getTimestamp());
         }
