@@ -164,12 +164,13 @@ class MongoManager implements CrudInterface
     /**
      * Saves $item into mongo, either by inserting or updating
      *
-     * @param array|mixed $item     must either be an array or a JMS serializable entity
-     * @param array       $criteria update criteria
+     * @param array|mixed  $item     must either be an array or a JMS serializable entity
+     * @param array        $criteria update criteria
+     * @param \MongoDate[] $isoDates extra fields, to be saved in mongo as ISODates
      *
      * @throws MongoException
      */
-    public function upsert($item= NULL, array $criteria = array())
+    public function upsert($item = NULL, array $criteria = array(), array $isoDates = array())
     {
         if (!is_string($item)) {
             try {
@@ -181,6 +182,10 @@ class MongoManager implements CrudInterface
             }
         } else {
             $dataAsArray = json_decode($item);
+        }
+
+        foreach ($isoDates as $key => $value) {
+            $dataAsArray[$key] = $value;
         }
 
         if ($item instanceof LastUpdated) {
@@ -252,10 +257,57 @@ class MongoManager implements CrudInterface
     }
 
     /**
-     * TODO add implementation
-     *
      * @param object $item
+     *
+     * @throws MongoException
      */
-    public function delete($item) {}
+    public function delete($item)
+    {
+        // grab the id to be removed
+        $id = $item->getId();
+
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $this->client->getClient()
+                    ->selectDB($this->getDatabase())
+                    ->selectCollection($this->getCollection())
+                    ->remove(array('_id' => $id), array('justOne' => true));
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(
+                        sprintf('Unable to remove from Mongo after %s retries', $this->client->getRetries()), null, $e
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * @param array $criteria
+     *
+     * @throws MongoException
+     */
+    public function deleteMultiple(array $criteria = array())
+    {
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $this->client->getClient()
+                    ->selectDB($this->getDatabase())
+                    ->selectCollection($this->getCollection())
+                    ->remove($criteria);
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(sprintf('Unable to remove from Mongo after %s retries', $this->client->getRetries()), null, $e);
+                }
+            }
+        }
+    }
 
 }
