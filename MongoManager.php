@@ -310,4 +310,69 @@ class MongoManager implements CrudInterface
         }
     }
 
+    /**
+     * Count number of documents in collection
+     *
+     * @param array $criteria
+     *
+     * @return int
+     *
+     * @throws MongoException
+     */
+    public function count(array $criteria = array())
+    {
+        $total = 0;
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $total = $this->client->getClient()
+                    ->selectDB($this->getDatabase())
+                    ->selectCollection($this->getCollection())
+                    ->count($criteria);
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(sprintf('Unable to count documents from Mongo after %s retries', $this->client->getRetries()), null, $e);
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Retrieve a list of distinct values for the given key from collection
+     *
+     * @param string $key
+     * @param array  $criteria
+     *
+     * @return array
+     *
+     * @throws MongoException
+     */
+    public function distinct($key, array $criteria = array())
+    {
+        $distinctList = array();
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $distinctList = $this->client->getClient()
+                    ->selectDB($this->getDatabase())
+                    ->selectCollection($this->getCollection())
+                    ->distinct($key, $criteria);
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(sprintf('Unable to count documents from Mongo after %s retries', $this->client->getRetries()), null, $e);
+                }
+            }
+        }
+
+        return $distinctList;
+    }
+    
 }
