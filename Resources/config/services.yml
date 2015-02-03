@@ -5,7 +5,6 @@ parameters:
   mongo_retries: 5
   mongo_url: dummy_mongo_url
   mongo_host: dummy_mongo_host
-  mongo_port: dummy_mongo_port
   mongo_user:
   mongo_pass:
   mongo_db: dummy_mongo_db
@@ -15,7 +14,7 @@ services:
 
   cti_mongo_service.client:
     class: %cti_mongo_service.client.class%
-    arguments: [%mongo_host%, %mongo_port%, %mongo_db%, %mongo_user%, %mongo_pass%, %mongo_retries%]
+    arguments: [%mongo_host%, "@=container.hasParameter('mongo_port') ? parameter('mongo_port') : '27017'", %mongo_db%, %mongo_user%, %mongo_pass%, %mongo_retries%, "@=container.hasParameter('mongo_replicaset') ? parameter('mongo_replicaset') : ''"]
 
   cti_mongo_service.manager:
     class : %cti_mongo_service.manager.class%

@@ -27,10 +27,11 @@ class MongoService
      * @param string $user
      * @param string $pass
      * @param string $retries
+     * @param string $replicaSet
      *
      * @throws ConnectionException
      */
-    public function __construct($host, $port, $db, $user, $pass, $retries)
+    public function __construct($host, $port, $db, $user, $pass, $retries, $replicaSet)
     {
         $this->retries = $retries;
 
@@ -40,7 +41,13 @@ class MongoService
             $mongoUrl .= sprintf('%s:%s@', $user, $pass);
         }
 
-        $mongoUrl .= sprintf('%s:%s/%s', $host, $port, $db);
+        if (strlen($replicaSet)) {
+            // replicaset means we are setting everything in mongo_host, so we don't care about mongo_port at this point
+            $mongoUrl .= sprintf('%s/%s?replicaSet=%s', $host, $db, $replicaSet);
+        } else {
+            // single machine mode
+            $mongoUrl .= sprintf('%s:%s/%s', $host, $port, $db);
+        }
 
         $this->connect($mongoUrl, $retries);
     }
@@ -50,7 +57,9 @@ class MongoService
      */
     public function __destruct()
     {
-        $this->client->close(true);
+        if ($this->client instanceof \MongoClient) {
+            $this->client->close(true);
+        }
         unset($this->client);
     }
 
