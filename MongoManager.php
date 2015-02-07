@@ -287,19 +287,20 @@ class MongoManager implements CrudInterface
 
     /**
      * @param array $criteria
+     * @param array $options
      *
      * @throws MongoException
      */
-    public function deleteMultiple(array $criteria = array())
+    public function deleteMultiple(array $criteria = array(), $options = array())
     {
         $i = 0;
         $retries = $this->client->getRetries();
         while ($i <= $retries) {
             try {
-                $this->client->getClient()
+                $status = $this->client->getClient()
                     ->selectDB($this->getDatabase())
                     ->selectCollection($this->getCollection())
-                    ->remove($criteria);
+                    ->remove($criteria, $options);
                 break;
             } catch (\Exception $e) {
                 $i++;
