@@ -291,7 +291,7 @@ class MongoManager implements CrudInterface
      *
      * @throws MongoException
      */
-    public function deleteMultiple(array $criteria = array(), $options = array())
+    public function deleteMultiple(array $criteria = array(), array $options = array())
     {
         $i = 0;
         $retries = $this->client->getRetries();
