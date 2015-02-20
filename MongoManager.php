@@ -212,6 +212,86 @@ class MongoManager implements CrudInterface
     }
 
     /**
+     * Insert new or update existing item, if one exists, only using specific fields
+     *
+     * @param object $item           Model to insert/update
+     * @param array  $criteria       Used for search
+     * @param array  $isoDates       Allows adding extra fields (key => value), stored as ISO dates in mongo
+     * @param array  $fields         Allows selection of which fields to use from $item HINT: use JMS SerializedName
+     * @param array  $fieldsOnInsert Allows selection of which fields to be updating only when inserting, and not when updating HINT: use JMS SerializedName
+     *
+     * @throws MongoException
+     */
+    public function upsertPartial
+    (
+        $item = NULL,
+        array $criteria = array(),
+        array $isoDates = array(),
+        array $fields = array(),
+        array $fieldsOnInsert = array()
+    )
+    {
+        {
+            if (!is_string($item)) {
+                try {
+                    $serializer = SerializerBuilder::create()->build();
+                    $json = $serializer->serialize($item, 'json');
+                    $dataAsArray = json_decode($json, true);
+                } catch (\Exception $e) {
+                    throw new MongoException('The $item parameter must be an array or a JMS serializable entity', null, $e);
+                }
+            } else {
+                $dataAsArray = json_decode($item);
+            }
+
+            $upsertItem = array();
+            $upsertItem['$set'] = array();
+            foreach ($fields as $field) {
+                if (!isset($dataAsArray[$field])) {
+                    continue;
+                }
+
+                $upsertItem['$set'][$field] = $dataAsArray[$field];
+            }
+
+            $upsertItem['$setOnInsert'] = array();
+            foreach ($fieldsOnInsert as $fieldOnInsert) {
+                if (!isset($dataAsArray[$fieldOnInsert])) {
+                    continue;
+                }
+
+                $upsertItem['$setOnInsert'][$fieldOnInsert] = $dataAsArray[$fieldOnInsert];
+            }
+
+            foreach ($isoDates as $key => $value) {
+                $upsertItem['$set'][$key] = $value;
+            }
+
+            if ($item instanceof LastUpdated) {
+                $upsertItem['$set']['lastUpdated'] = new \MongoDate($item->getLastUpdated()->getTimestamp());
+            }
+
+            $i = 0;
+            $retries = $this->client->getRetries();
+            while ($i <= $retries) {
+                try {
+                    $this->client->getClient()
+                        ->selectDB($this->getDatabase())
+                        ->selectCollection($this->getCollection())
+                        ->update($criteria, $upsertItem, array('upsert' => true));
+
+                    break;
+                } catch (\Exception $e) {
+                    $i++;
+                    if ($i >= $this->client->getRetries()) {
+                        throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * TODO add implementation
      *
      * @param object $item
