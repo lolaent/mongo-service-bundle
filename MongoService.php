@@ -104,7 +104,11 @@ class MongoService
     public function reconnect()
     {
         usleep($this->getSleepTime());
-        $this->client->close();
+
+        if ($this->client instanceof \MongoClient) {
+            $this->client->close(true);
+        }
+
         $this->client->connect($this->getMongoUrl());
     }
 
