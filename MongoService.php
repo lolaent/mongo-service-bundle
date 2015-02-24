@@ -20,6 +20,12 @@ class MongoService
     /** @var  integer */
     protected $retries;
 
+    /** @var  string */
+    protected $mongoUrl;
+
+    /** @var  integer */
+    protected $sleepTime;
+
     /**
      * @param string $host
      * @param string $port
@@ -49,7 +55,9 @@ class MongoService
             $mongoUrl .= sprintf('%s:%s/%s', $host, $port, $db);
         }
 
-        $this->connect($mongoUrl, $retries);
+        $this->mongoUrl = $mongoUrl;
+
+        $this->connect($this->mongoUrl, $retries);
     }
 
     /**
@@ -86,6 +94,22 @@ class MongoService
                 }
             }
         }
+    }
+
+    /**
+     * Reconnects to the mongo DB
+     *
+     * @throws ConnectionException
+     */
+    public function reconnect()
+    {
+        usleep($this->getSleepTime());
+
+        if ($this->client instanceof \MongoClient) {
+            $this->client->close(true);
+        }
+
+        $this->client->connect($this->getMongoUrl());
     }
 
     /**
@@ -127,4 +151,45 @@ class MongoService
     {
         return $this->retries;
     }
+
+    /**
+     * @param string $mongoUrl
+     *
+     * @return MongoService
+     */
+    public function setMongoUrl($mongoUrl)
+    {
+        $this->mongoUrl = $mongoUrl;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMongoUrl()
+    {
+        return $this->mongoUrl;
+    }
+
+    /**
+     * @param int $sleepTime
+     *
+     * @return MongoService
+     */
+    public function setSleepTime($sleepTime)
+    {
+        $this->sleepTime = $sleepTime;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSleepTime()
+    {
+        return $this->sleepTime;
+    }
+
 }

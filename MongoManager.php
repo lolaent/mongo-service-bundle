@@ -107,6 +107,8 @@ class MongoManager implements CrudInterface
      */
     public function read(array $criteria = array(), $fields = array())
     {
+        $test = $this->getClient()->getSleepTime();
+
         $i = 0;
         $retries = $this->client->getRetries();
         while ($i <= $retries) {
@@ -207,6 +209,8 @@ class MongoManager implements CrudInterface
                 if ($i >= $this->client->getRetries()) {
                     throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
                 }
+
+                $this->client->reconnect();
             }
         }
     }
@@ -286,6 +290,8 @@ class MongoManager implements CrudInterface
                     if ($i >= $this->client->getRetries()) {
                         throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
                     }
+
+                    $this->client->reconnect();
                 }
             }
         }
@@ -332,6 +338,8 @@ class MongoManager implements CrudInterface
                 if ($i >= $this->client->getRetries()) {
                     throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
                 }
+
+                $this->client->reconnect();
             }
         }
     }
@@ -361,6 +369,8 @@ class MongoManager implements CrudInterface
                         sprintf('Unable to remove from Mongo after %s retries', $this->client->getRetries()), null, $e
                     );
                 }
+
+                $this->client->reconnect();
             }
         }
     }
@@ -387,6 +397,8 @@ class MongoManager implements CrudInterface
                 if ($i >= $this->client->getRetries()) {
                     throw new MongoException(sprintf('Unable to remove from Mongo after %s retries', $this->client->getRetries()), null, $e);
                 }
+
+                $this->client->reconnect();
             }
         }
     }

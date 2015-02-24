@@ -9,12 +9,15 @@ parameters:
   mongo_pass:
   mongo_db: dummy_mongo_db
   mongo_coll: dummy_mongo_coll
+  mongo_sleep_before_reconnect: 250
 
 services:
 
   cti_mongo_service.client:
     class: %cti_mongo_service.client.class%
     arguments: [%mongo_host%, "@=container.hasParameter('mongo_port') ? parameter('mongo_port') : '27017'", %mongo_db%, %mongo_user%, %mongo_pass%, %mongo_retries%, "@=container.hasParameter('mongo_replicaset') ? parameter('mongo_replicaset') : ''"]
+    calls:
+      - [ setSleepTime, [%mongo_sleep_before_reconnect%] ]
 
   cti_mongo_service.manager:
     class : %cti_mongo_service.manager.class%
