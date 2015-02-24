@@ -207,6 +207,10 @@ class MongoManager implements CrudInterface
                 if ($i >= $this->client->getRetries()) {
                     throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
                 }
+
+                usleep($this->getClient()->getSleepTime());
+                $this->client->getClient()->close();
+                $this->client->connect($this->client->getMongoUrl());
             }
         }
     }
@@ -286,6 +290,10 @@ class MongoManager implements CrudInterface
                     if ($i >= $this->client->getRetries()) {
                         throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
                     }
+
+                    usleep($this->getClient()->getSleepTime());
+                    $this->client->getClient()->close();
+                    $this->client->connect($this->client->getMongoUrl());
                 }
             }
         }
@@ -332,6 +340,10 @@ class MongoManager implements CrudInterface
                 if ($i >= $this->client->getRetries()) {
                     throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
                 }
+
+                usleep($this->getClient()->getSleepTime());
+                $this->client->getClient()->close();
+                $this->client->connect($this->client->getMongoUrl());
             }
         }
     }
@@ -361,6 +373,10 @@ class MongoManager implements CrudInterface
                         sprintf('Unable to remove from Mongo after %s retries', $this->client->getRetries()), null, $e
                     );
                 }
+
+                usleep($this->getClient()->getSleepTime());
+                $this->client->getClient()->close();
+                $this->client->connect($this->client->getMongoUrl());
             }
         }
     }
@@ -387,6 +403,10 @@ class MongoManager implements CrudInterface
                 if ($i >= $this->client->getRetries()) {
                     throw new MongoException(sprintf('Unable to remove from Mongo after %s retries', $this->client->getRetries()), null, $e);
                 }
+
+                usleep($this->getClient()->getSleepTime());
+                $this->client->getClient()->close();
+                $this->client->connect($this->client->getMongoUrl());
             }
         }
     }
