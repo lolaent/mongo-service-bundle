@@ -34,14 +34,12 @@ class MongoService
      * @param string $pass
      * @param string $retries
      * @param string $replicaSet
-     * @param int    $sleepTime
      *
      * @throws ConnectionException
      */
-    public function __construct($host, $port, $db, $user, $pass, $retries, $replicaSet, $sleepTime)
+    public function __construct($host, $port, $db, $user, $pass, $retries, $replicaSet)
     {
         $this->retries = $retries;
-        $this->sleepTime = $sleepTime;
 
         $mongoUrl = self::MONGO_PREFIX;
 
@@ -96,6 +94,18 @@ class MongoService
                 }
             }
         }
+    }
+
+    /**
+     * Reconnects to the mongo DB
+     *
+     * @throws ConnectionException
+     */
+    public function reconnect()
+    {
+        usleep($this->getSleepTime());
+        $this->client->close();
+        $this->client->connect($this->getMongoUrl());
     }
 
     /**

@@ -107,6 +107,8 @@ class MongoManager implements CrudInterface
      */
     public function read(array $criteria = array(), $fields = array())
     {
+        $test = $this->getClient()->getSleepTime();
+
         $i = 0;
         $retries = $this->client->getRetries();
         while ($i <= $retries) {
@@ -208,9 +210,7 @@ class MongoManager implements CrudInterface
                     throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
                 }
 
-                usleep($this->getClient()->getSleepTime());
-                $this->client->getClient()->close();
-                $this->client->connect($this->client->getMongoUrl());
+                $this->client->reconnect();
             }
         }
     }
@@ -291,9 +291,7 @@ class MongoManager implements CrudInterface
                         throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
                     }
 
-                    usleep($this->getClient()->getSleepTime());
-                    $this->client->getClient()->close();
-                    $this->client->connect($this->client->getMongoUrl());
+                    $this->client->reconnect();
                 }
             }
         }
@@ -341,9 +339,7 @@ class MongoManager implements CrudInterface
                     throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
                 }
 
-                usleep($this->getClient()->getSleepTime());
-                $this->client->getClient()->close();
-                $this->client->connect($this->client->getMongoUrl());
+                $this->client->reconnect();
             }
         }
     }
@@ -374,9 +370,7 @@ class MongoManager implements CrudInterface
                     );
                 }
 
-                usleep($this->getClient()->getSleepTime());
-                $this->client->getClient()->close();
-                $this->client->connect($this->client->getMongoUrl());
+                $this->client->reconnect();
             }
         }
     }
@@ -404,9 +398,7 @@ class MongoManager implements CrudInterface
                     throw new MongoException(sprintf('Unable to remove from Mongo after %s retries', $this->client->getRetries()), null, $e);
                 }
 
-                usleep($this->getClient()->getSleepTime());
-                $this->client->getClient()->close();
-                $this->client->connect($this->client->getMongoUrl());
+                $this->client->reconnect();
             }
         }
     }
