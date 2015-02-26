@@ -107,8 +107,6 @@ class MongoManager implements CrudInterface
      */
     public function read(array $criteria = array(), $fields = array())
     {
-        $test = $this->getClient()->getSleepTime();
-
         $i = 0;
         $retries = $this->client->getRetries();
         while ($i <= $retries) {
