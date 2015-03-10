@@ -10,6 +10,7 @@ parameters:
   mongo_db: dummy_mongo_db
   mongo_coll: dummy_mongo_coll
   mongo_sleep_before_reconnect: 250
+  mongo_read_preference: primary
 
 services:
 
@@ -18,6 +19,7 @@ services:
     arguments: [%mongo_host%, "@=container.hasParameter('mongo_port') ? parameter('mongo_port') : '27017'", %mongo_db%, %mongo_user%, %mongo_pass%, %mongo_retries%, "@=container.hasParameter('mongo_replicaset') ? parameter('mongo_replicaset') : ''"]
     calls:
       - [ setSleepTime, [%mongo_sleep_before_reconnect%] ]
+      - [ setReadPreference, [%mongo_read_preference%] ]
 
   cti_mongo_service.manager:
     class : %cti_mongo_service.manager.class%
