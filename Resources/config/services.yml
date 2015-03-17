@@ -10,7 +10,7 @@ parameters:
   mongo_db: dummy_mongo_db
   mongo_coll: dummy_mongo_coll
   mongo_sleep_before_reconnect: 250
-  mongo_read_preference: primary
+  mongo_read_preference: primary # primary, primaryPreferred, secondary, secondaryPreferred, nearest
 
 services:
 
