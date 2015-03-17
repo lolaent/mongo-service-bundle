@@ -192,4 +192,24 @@ class MongoService
         return $this->sleepTime;
     }
 
+    /**
+     * @return array
+     */
+    public function getReadPreference()
+    {
+        return $this->client->getReadPreference();
+    }
+
+    /**
+     * @param string $readPreference
+     *
+     * @return MongoService
+     */
+    public function setReadPreference($readPreference)
+    {
+        $this->client->setReadPreference($readPreference);
+
+        return $this;
+    }
+
 }
