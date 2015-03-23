@@ -256,13 +256,15 @@ class MongoManager implements CrudInterface
                 $upsertItem['$set'][$field] = $dataAsArray[$field];
             }
 
-            $upsertItem['$setOnInsert'] = array();
-            foreach ($fieldsOnInsert as $fieldOnInsert) {
-                if (!isset($dataAsArray[$fieldOnInsert])) {
-                    continue;
-                }
+            if (!empty($fieldsOnInsert)) {
+                $upsertItem['$setOnInsert'] = array();
+                foreach ($fieldsOnInsert as $fieldOnInsert) {
+                    if (!isset($dataAsArray[$fieldOnInsert])) {
+                        continue;
+                    }
 
-                $upsertItem['$setOnInsert'][$fieldOnInsert] = $dataAsArray[$fieldOnInsert];
+                    $upsertItem['$setOnInsert'][$fieldOnInsert] = $dataAsArray[$fieldOnInsert];
+                }
             }
 
             foreach ($isoDates as $key => $value) {
