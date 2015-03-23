@@ -246,14 +246,16 @@ class MongoManager implements CrudInterface
                 $dataAsArray = json_decode($item);
             }
 
-            $upsertItem = array();
-            $upsertItem['$set'] = array();
-            foreach ($fields as $field) {
-                if (!isset($dataAsArray[$field])) {
-                    continue;
-                }
+            if (!empty($fields)) {
+                $upsertItem = array();
+                $upsertItem['$set'] = array();
+                foreach ($fields as $field) {
+                    if (!isset($dataAsArray[$field])) {
+                        continue;
+                    }
 
-                $upsertItem['$set'][$field] = $dataAsArray[$field];
+                    $upsertItem['$set'][$field] = $dataAsArray[$field];
+                }
             }
 
             if (!empty($fieldsOnInsert)) {
