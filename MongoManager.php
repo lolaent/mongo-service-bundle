@@ -347,11 +347,10 @@ class MongoManager implements CrudInterface
      *
      * @param       $item
      * @param array $criteria
-     * @param array $options
      *
      * @throws MongoException
      */
-    public function updateMultiple($item, array $criteria = array(), array $options = array())
+    public function updateMultiple($item, array $criteria = array())
     {
         if (!is_array($item)) {
             throw new MongoException(sprintf('$item parameter must be an array'));
@@ -364,7 +363,7 @@ class MongoManager implements CrudInterface
                 $this->client->getClient()
                     ->selectDB($this->getDatabase())
                     ->selectCollection($this->getCollection())
-                    ->update($criteria, $item, $options);
+                    ->update($criteria, $item, array('multiple' => true));
 
                 break;
             } catch (\Exception $e) {
