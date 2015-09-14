@@ -321,8 +321,40 @@ class MongoManager implements CrudInterface
             throw new MongoException(sprintf('$item parameter must be an array'));
         }
 
-        if ($item instanceof LastUpdated) {
-            $dataAsArray['lastUpdated'] = new \MongoDate($item->getLastUpdated()->getTimestamp());
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $this->client->getClient()
+                    ->selectDB($this->getDatabase())
+                    ->selectCollection($this->getCollection())
+                    ->update($criteria, $item);
+
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(sprintf('Unable to save to Mongo after %s retries', $this->client->getRetries()), null, $e);
+                }
+
+                $this->client->reconnect();
+            }
+        }
+    }
+
+    /**
+     * TODO add implementation
+     *
+     * @param       $item
+     * @param array $criteria
+     * @param array $options
+     *
+     * @throws MongoException
+     */
+    public function updateMultiple($item, array $criteria = array(), array $options = array())
+    {
+        if (!is_array($item)) {
+            throw new MongoException(sprintf('$item parameter must be an array'));
         }
 
         $i = 0;
@@ -332,7 +364,7 @@ class MongoManager implements CrudInterface
                 $this->client->getClient()
                     ->selectDB($this->getDatabase())
                     ->selectCollection($this->getCollection())
-                    ->update($criteria, $item);
+                    ->update($criteria, $item, $options);
 
                 break;
             } catch (\Exception $e) {
