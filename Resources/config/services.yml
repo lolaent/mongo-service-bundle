@@ -1,6 +1,6 @@
 parameters:
-  cti_mongo_service.client.class : CTI\MongoServiceBundle\MongoService
-  cti_mongo_service.manager.class : CTI\MongoServiceBundle\MongoManager
+  cti_mongo_service.client.class: CTI\MongoServiceBundle\CtiMongoClient
+  cti_mongo_service.collection_manager.class: CTI\MongoServiceBundle\MongoCollectionManager
 
   mongo_retries: 5
   mongo_url: dummy_mongo_url
@@ -21,6 +21,6 @@ services:
       - [ setSleepTime, [%mongo_sleep_before_reconnect%] ]
       - [ setReadPreference, [%mongo_read_preference%] ]
 
-  cti_mongo_service.manager:
-    class : %cti_mongo_service.manager.class%
+  cti_mongo_service.collection_manager:
+    class : %cti_mongo_service.collection_manager.class%
     arguments : [ @cti_mongo_service.client, %mongo_db%, %mongo_coll% ]

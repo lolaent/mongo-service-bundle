@@ -10,7 +10,7 @@ use CTI\MongoServiceBundle\Exception\ConnectionException;
  * @package CTI\MongoServiceBundle
  * @author  Georgiana Gligor <g@lolaent.com>
  */
-class MongoService
+class CtiMongoClient
 {
     const MONGO_PREFIX = 'mongodb://';
 
@@ -57,7 +57,7 @@ class MongoService
 
         $this->mongoUrl = $mongoUrl;
 
-        $this->connect($this->mongoUrl, $retries);
+        $this->connect($this->mongoUrl);
     }
 
     /**
@@ -74,7 +74,7 @@ class MongoService
     /**
      * Connects to the mongo DB, and performs retries
      *
-     * @param string  $mongoUrl
+     * @param string $mongoUrl
      *
      * @throws ConnectionException
      */
@@ -90,7 +90,9 @@ class MongoService
             } catch (\Exception $e) {
                 $i++;
                 if ($i >= $this->retries) {
-                    throw new ConnectionException(sprintf('Unable to connect to Mongo after %s retries', $this->retries), null, $e);
+                    throw new ConnectionException(
+                        sprintf('Unable to connect to Mongo after %s retries', $this->retries), null, $e
+                    );
                 }
             }
         }
@@ -109,7 +111,7 @@ class MongoService
             $this->client->close(true);
         }
 
-        $this->client->connect($this->getMongoUrl());
+        $this->client->connect();
     }
 
     /**
@@ -155,7 +157,7 @@ class MongoService
     /**
      * @param string $mongoUrl
      *
-     * @return MongoService
+     * @return CtiMongoClient
      */
     public function setMongoUrl($mongoUrl)
     {
@@ -175,7 +177,7 @@ class MongoService
     /**
      * @param int $sleepTime
      *
-     * @return MongoService
+     * @return CtiMongoClient
      */
     public function setSleepTime($sleepTime)
     {
@@ -203,7 +205,7 @@ class MongoService
     /**
      * @param string $readPreference
      *
-     * @return MongoService
+     * @return CtiMongoClient
      */
     public function setReadPreference($readPreference)
     {

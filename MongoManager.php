@@ -5,7 +5,6 @@ namespace CTI\MongoServiceBundle;
 use CTI\MongoServiceBundle\Interfaces\LastUpdated;
 use JMS\Serializer\SerializerBuilder;
 use CTI\MongoServiceBundle\Exception\MongoException;
-use Tc\Crud\CrudInterface;
 
 /**
  * Manages data which uses MongoDB as persistent storage.
@@ -14,9 +13,9 @@ use Tc\Crud\CrudInterface;
  * @author  Alexandru Marius Cos <alexandru.cos@cloudtroopers.ro>
  * @author  Georgiana Gligor     <g@lolaent.com>
  */
-class MongoManager implements CrudInterface
+class MongoManager
 {
-    /** @var  MongoService */
+    /** @var  CtiMongoClient */
     protected $client;
 
     /** @var  string */
@@ -26,11 +25,11 @@ class MongoManager implements CrudInterface
     protected $collection;
 
     /**
-     * @param MongoService $mongoService
-     * @param $mongoDb
-     * @param $mongoColl
+     * @param CtiMongoClient $mongoService
+     * @param string $mongoDb
+     * @param string $mongoColl
      */
-    public function __construct(MongoService $mongoService, $mongoDb, $mongoColl)
+    public function __construct(CtiMongoClient $mongoService, $mongoDb, $mongoColl)
     {
         $this->client = $mongoService;
         $this->database = $mongoDb;
@@ -78,7 +77,7 @@ class MongoManager implements CrudInterface
     }
 
     /**
-     * @param \CTI\MongoServiceBundle\MongoService $mongoService
+     * @param \CTI\MongoServiceBundle\CtiMongoClient $mongoService
      *
      * @return $this
      */
@@ -90,7 +89,7 @@ class MongoManager implements CrudInterface
     }
 
     /**
-     * @return \CTI\MongoServiceBundle\MongoService
+     * @return \CTI\MongoServiceBundle\CtiMongoClient
      */
     public function getClient()
     {
