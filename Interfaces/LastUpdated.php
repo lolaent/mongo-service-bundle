@@ -9,7 +9,7 @@ namespace CTI\MongoServiceBundle\Interfaces;
 /**
  * Ensures an entity exposes a lastUpdated field
  *
- * @package TeeSnap\CoreBundle\Interfaces
+ * @package CTI\MongoServiceBundle\Interfaces
  *
  * @author  Georgiana Gligor <g@lolaent.com>
  */

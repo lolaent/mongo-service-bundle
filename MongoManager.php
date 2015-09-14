@@ -308,7 +308,6 @@ class MongoManager implements CrudInterface
     public function create($item = NULL, array $criteria = array()) {}
 
     /**
-     * TODO add implementation
      *
      * @param array $item
      * @param array $criteria
@@ -319,6 +318,10 @@ class MongoManager implements CrudInterface
     {
         if (!is_array($item)) {
             throw new MongoException(sprintf('$item parameter must be an array'));
+        }
+
+        if ($item instanceof LastUpdated) {
+            $item['lastUpdated'] = new \MongoDate($item->getLastUpdated()->getTimestamp());
         }
 
         $i = 0;
@@ -343,8 +346,6 @@ class MongoManager implements CrudInterface
     }
 
     /**
-     * TODO add implementation
-     *
      * @param       $item
      * @param array $criteria
      *
@@ -354,6 +355,10 @@ class MongoManager implements CrudInterface
     {
         if (!is_array($item)) {
             throw new MongoException(sprintf('$item parameter must be an array'));
+        }
+
+        if ($item instanceof LastUpdated) {
+            $item['lastUpdated'] = new \MongoDate($item->getLastUpdated()->getTimestamp());
         }
 
         $i = 0;
