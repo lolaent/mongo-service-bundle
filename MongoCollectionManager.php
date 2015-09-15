@@ -108,18 +108,21 @@ class MongoCollectionManager
      */
     public function update(array $criteria, $newobj, array $options = array(), array $isoDates = array())
     {
-        if (is_object($newobj)) {
+        if ($newobj instanceof \stdClass) {
+            $json = json_encode($newobj);
+            $dataAsArray = json_decode($json);
+        } elseif (is_object($newobj)) {
             try {
                 $serializer = SerializerBuilder::create()->build();
                 $json = $serializer->serialize($newobj, 'json');
                 $dataAsArray = json_decode($json, true);
             } catch (\Exception $e) {
-                throw new MongoException('The $item parameter must be an array or a JMS serializable entity', null, $e);
+                throw new MongoException('The $item parameter must be an array, stdClass or a JMS serializable entity', null, $e);
             }
         } elseif (is_array($newobj)) {
             $dataAsArray = $newobj;
         } else {
-            throw new MongoException('The $item parameter must be an array or a JMS serializable entity');
+            throw new MongoException('The $item parameter must be an array, stdClass or a JMS serializable entity');
         }
 
         if ($newobj instanceof LastUpdated) {
