@@ -2,132 +2,264 @@
 
 namespace CTI\MongoServiceBundle;
 
-use CTI\MongoServiceBundle\Exception\ConnectionException;
+use CTI\MongoServiceBundle\Exception\MongoException;
+use CTI\MongoServiceBundle\Interfaces\LastUpdated;
+use JMS\Serializer\SerializerBuilder;
 
-/**
- * Mongo client offering a retry mechanism for connections
- *
- * @package CTI\MongoServiceBundle
- * @author  Georgiana Gligor <g@lolaent.com>
- */
 class CtiMongoClient
 {
-    const MONGO_PREFIX = 'mongodb://';
-
-    /** @var  \MongoClient */
+    /** @var  MongoConnectionWrapper */
     protected $client;
 
-    /** @var  integer */
-    protected $retries;
+    /** @var  string */
+    protected $databaseName;
 
     /** @var  string */
-    protected $mongoUrl;
-
-    /** @var  integer */
-    protected $sleepTime;
+    protected $collectionName;
 
     /**
-     * @param string $host
-     * @param string $port
-     * @param string $db
-     * @param string $user
-     * @param string $pass
-     * @param string $retries
-     * @param string $replicaSet
-     *
-     * @throws ConnectionException
+     * @param MongoConnectionWrapper $mongoService
+     * @param string         $mongoDb
+     * @param string         $mongoColl
      */
-    public function __construct($host, $port, $db, $user, $pass, $retries, $replicaSet)
+    public function __construct(MongoConnectionWrapper $mongoService, $mongoDb, $mongoColl)
     {
-        $this->retries = $retries;
-
-        $mongoUrl = self::MONGO_PREFIX;
-
-        if (!empty($user) && !empty($pass)) {
-            $mongoUrl .= sprintf('%s:%s@', $user, $pass);
-        }
-
-        if (strlen($replicaSet)) {
-            // replicaset means we are setting everything in mongo_host, so we don't care about mongo_port at this point
-            $mongoUrl .= sprintf('%s/%s?replicaSet=%s', $host, $db, $replicaSet);
-        } else {
-            // single machine mode
-            $mongoUrl .= sprintf('%s:%s/%s', $host, $port, $db);
-        }
-
-        $this->mongoUrl = $mongoUrl;
-
-        $this->connect($this->mongoUrl);
+        $this->client = $mongoService;
+        $this->databaseName = $mongoDb;
+        $this->collectionName = $mongoColl;
     }
 
     /**
-     * Destructor makes sure connections are closed
-     */
-    public function __destruct()
-    {
-        if ($this->client instanceof \MongoClient) {
-            $this->client->close(true);
-        }
-        unset($this->client);
-    }
-
-    /**
-     * Connects to the mongo DB, and performs retries
+     * @param array $query
+     * @param array $fields
      *
-     * @param string $mongoUrl
+     * @return \MongoCursor|null
      *
-     * @throws ConnectionException
+     * @throws MongoException
      */
-    public function connect($mongoUrl)
+    public function find(array $query = array(), array $fields = array())
     {
-        $this->client = new \MongoClient($mongoUrl, array("connect" => false));
         $i = 0;
-        while ($i <= $this->retries) {
+        $retries = $this->client->getRetries();
+        $cursor = null;
+        while ($i <= $retries) {
             try {
-                $this->client->close(true);
-                $this->client->connect();
+                $cursor = $this->getClient()->getClient()
+                    ->selectDB($this->databaseName)
+                    ->selectCollection($this->collectionName)
+                    ->find($query, $fields);
+
                 break;
             } catch (\Exception $e) {
                 $i++;
-                if ($i >= $this->retries) {
-                    throw new ConnectionException(
-                        sprintf('Unable to connect to Mongo after %s retries', $this->retries), null, $e
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(
+                        sprintf('Unable to find in Mongo after %s retries', $this->client->getRetries()), null, $e
                     );
                 }
+            }
+        }
+
+        return $cursor;
+    }
+
+    /**
+     * @param array $query
+     * @param array $fields
+     *
+     * @return array|null
+     *
+     * @throws MongoException
+     */
+    public function findOne(array $query = array(), array $fields = array())
+    {
+        $i = 0;
+        $retries = $this->client->getRetries();
+        $cursor = null;
+        while ($i <= $retries) {
+            try {
+                $cursor = $this->getClient()->getClient()
+                    ->selectDB($this->databaseName)
+                    ->selectCollection($this->collectionName)
+                    ->findOne($query, $fields);
+
+                break;
+            } catch (\Exception $e) {
+                // we know this is not nice, but we agreed to do it this way only this time
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(
+                        sprintf('Unable to findOne in Mongo after %s retries', $retries), null, $e
+                    );
+                }
+            }
+        }
+
+        return $cursor;
+    }
+
+    /**
+     * @param array $criteria
+     * @param mixed $newobj
+     * @param array $options
+     * @param array $isoDates
+     *
+     * @throws MongoException
+     */
+    public function update(array $criteria, $newobj, array $options = array(), array $isoDates = array())
+    {
+        if ($newobj instanceof \stdClass) {
+            $json = json_encode($newobj);
+            $dataAsArray = json_decode($json);
+        } elseif (is_object($newobj)) {
+            try {
+                $serializer = SerializerBuilder::create()->build();
+                $json = $serializer->serialize($newobj, 'json');
+                $dataAsArray = json_decode($json, true);
+            } catch (\Exception $e) {
+                throw new MongoException('The $item parameter must be an array, stdClass or a JMS serializable entity', null, $e);
+            }
+        } elseif (is_array($newobj)) {
+            $dataAsArray = $newobj;
+        } else {
+            throw new MongoException('The $item parameter must be an array, stdClass or a JMS serializable entity');
+        }
+
+        if ($newobj instanceof LastUpdated) {
+            $dataAsArray['lastUpdated'] = new \MongoDate($newobj->getLastUpdated()->getTimestamp());
+        }
+
+        foreach ($isoDates as $key => $value) {
+            $dataAsArray[$key] = $value;
+        }
+
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $status = $this->client->getClient()
+                    ->selectDB($this->databaseName)
+                    ->selectCollection($this->collectionName)
+                    ->update($criteria, $dataAsArray, $options);
+
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(
+                        sprintf('Unable to update to Mongo after %s retries', $this->client->getRetries()), null, $e
+                    );
+                }
+
+                $this->client->reconnect();
             }
         }
     }
 
     /**
-     * Reconnects to the mongo DB
+     * @param array $criteria
+     * @param array $options
      *
-     * @throws ConnectionException
+     * @throws MongoException
      */
-    public function reconnect()
+    public function remove(array $criteria = array(), array $options = array())
     {
-        usleep($this->getSleepTime());
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $status = $this->client->getClient()
+                    ->selectDB($this->databaseName)
+                    ->selectCollection($this->collectionName)
+                    ->remove($criteria, $options);
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(
+                        sprintf('Unable to remove from Mongo after %s retries', $this->client->getRetries()), null, $e
+                    );
+                }
 
-        if ($this->client instanceof \MongoClient) {
-            $this->client->close(true);
+                $this->client->reconnect();
+            }
+        }
+    }
+
+    /**
+     * @param array $criteria
+     *
+     * @return int
+     *
+     * @throws MongoException
+     */
+    public function count(array $criteria = array())
+    {
+        $total = 0;
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $total = $this->client->getClient()
+                    ->selectDB($this->databaseName)
+                    ->selectCollection($this->collectionName)
+                    ->count($criteria);
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(
+                        sprintf('Unable to count documents from Mongo after %s retries', $this->client->getRetries()),
+                        null,
+                        $e
+                    );
+                }
+            }
         }
 
-        $this->client->connect();
+        return $total;
     }
 
     /**
-     * @param \MongoClient $client
+     * Retrieve a list of distinct values for the given key from collection
      *
-     * @return $this
+     * @param string $key
+     * @param array  $criteria
+     *
+     * @return array
+     *
+     * @throws MongoException
      */
-    public function setClient($client)
+    public function distinct($key, array $criteria = null)
     {
-        $this->client = $client;
+        $distinctList = array();
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $distinctList = $this->client->getClient()
+                    ->selectDB($this->databaseName)
+                    ->selectCollection($this->collectionName)
+                    ->distinct($key, $criteria);
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(
+                        sprintf(
+                            'Unable to count distinct documents from Mongo after %s retries',
+                            $this->client->getRetries()
+                        ), null, $e
+                    );
+                }
+            }
+        }
 
-        return $this;
+        return $distinctList;
     }
 
     /**
-     * @return \MongoClient
+     * @return MongoConnectionWrapper
      */
     public function getClient()
     {
@@ -135,33 +267,13 @@ class CtiMongoClient
     }
 
     /**
-     * @param int $retries
-     *
-     * @return $this;
-     */
-    public function setRetries($retries)
-    {
-        $this->retries = $retries;
-
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getRetries()
-    {
-        return $this->retries;
-    }
-
-    /**
-     * @param string $mongoUrl
+     * @param MongoConnectionWrapper $client
      *
      * @return CtiMongoClient
      */
-    public function setMongoUrl($mongoUrl)
+    public function setClient(MongoConnectionWrapper $client)
     {
-        $this->mongoUrl = $mongoUrl;
+        $this->client = $client;
 
         return $this;
     }
@@ -169,49 +281,40 @@ class CtiMongoClient
     /**
      * @return string
      */
-    public function getMongoUrl()
+    public function getDatabaseName()
     {
-        return $this->mongoUrl;
+        return $this->databaseName;
     }
 
     /**
-     * @param int $sleepTime
+     * @param string $databaseName
      *
      * @return CtiMongoClient
      */
-    public function setSleepTime($sleepTime)
+    public function setDatabaseName($databaseName)
     {
-        $this->sleepTime = $sleepTime;
+        $this->databaseName = $databaseName;
 
         return $this;
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getSleepTime()
+    public function getCollectionName()
     {
-        return $this->sleepTime;
+        return $this->collectionName;
     }
 
     /**
-     * @return array
-     */
-    public function getReadPreference()
-    {
-        return $this->client->getReadPreference();
-    }
-
-    /**
-     * @param string $readPreference
+     * @param string $collectionName
      *
      * @return CtiMongoClient
      */
-    public function setReadPreference($readPreference)
+    public function setCollectionName($collectionName)
     {
-        $this->client->setReadPreference($readPreference);
+        $this->collectionName = $collectionName;
 
         return $this;
     }
-
 }
