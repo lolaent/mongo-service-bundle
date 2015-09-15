@@ -137,7 +137,7 @@ class MongoCollectionManager
                 $status = $this->client->getClient()
                     ->selectDB($this->databaseName)
                     ->selectCollection($this->collectionName)
-                    ->update($criteria, $newobj, $options);
+                    ->update($criteria, $dataAsArray, $options);
 
                 break;
             } catch (\Exception $e) {
