@@ -22,6 +22,12 @@
   "require-dev" : {
     "phpunit/phpunit" : "4.2.*"
   },
+  "repositories" : [
+    {
+      "type": "vcs",
+      "url": "git@github.com:lolaent/crud-php.git"
+    }
+  ],
   "autoload" : {
     "psr-0": { "CTI\\MongoServiceBundle": "" }
   },
