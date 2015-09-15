@@ -102,10 +102,11 @@ class MongoCollectionManager
      * @param array $criteria
      * @param mixed $newobj
      * @param array $options
+     * @param array $isoDates
      *
      * @throws MongoException
      */
-    public function update(array $criteria, $newobj, array $options = array())
+    public function update(array $criteria, $newobj, array $options = array(), array $isoDates = array())
     {
         if (is_object($newobj)) {
             try {
@@ -123,6 +124,10 @@ class MongoCollectionManager
 
         if ($newobj instanceof LastUpdated) {
             $dataAsArray['lastUpdated'] = new \MongoDate($newobj->getLastUpdated()->getTimestamp());
+        }
+
+        foreach ($isoDates as $key => $value) {
+            $dataAsArray[$key] = $value;
         }
 
         $i = 0;
