@@ -19,8 +19,8 @@ class CtiMongoClient
 
     /**
      * @param MongoConnectionWrapper $mongoService
-     * @param string         $mongoDb
-     * @param string         $mongoColl
+     * @param string                 $mongoDb
+     * @param string                 $mongoColl
      */
     public function __construct(MongoConnectionWrapper $mongoService, $mongoDb, $mongoColl)
     {
@@ -100,33 +100,41 @@ class CtiMongoClient
 
     /**
      * @param array $criteria
-     * @param mixed $newobj
+     * @param mixed $newObj
      * @param array $options
      * @param array $isoDates
      *
      * @throws MongoException
      */
-    public function update(array $criteria, $newobj, array $options = array(), array $isoDates = array())
+    public function update(array $criteria, $newObj, array $options = array(), array $isoDates = array())
     {
-        if ($newobj instanceof \stdClass) {
-            $json = json_encode($newobj);
-            $dataAsArray = json_decode($json);
-        } elseif (is_object($newobj)) {
-            try {
-                $serializer = SerializerBuilder::create()->build();
-                $json = $serializer->serialize($newobj, 'json');
-                $dataAsArray = json_decode($json, true);
-            } catch (\Exception $e) {
-                throw new MongoException('The $item parameter must be an array, stdClass or a JMS serializable entity', null, $e);
-            }
-        } elseif (is_array($newobj)) {
-            $dataAsArray = $newobj;
-        } else {
-            throw new MongoException('The $item parameter must be an array, stdClass or a JMS serializable entity');
+        switch (true) {
+            case is_array($newObj):
+                $dataAsArray = $newObj;
+                break;
+            case $newObj instanceof \stdClass:
+                $json = json_encode($newObj);
+                $dataAsArray = json_decode($json);
+                break;
+            case is_object($newObj) && !($newObj instanceof \stdClass):
+                try {
+                    $serializer = SerializerBuilder::create()->build();
+                    $json = $serializer->serialize($newObj, 'json');
+                    $dataAsArray = json_decode($json, true);
+                } catch (\Exception $e) {
+                    throw new MongoException(
+                        'The $item parameter must be an array, stdClass or a JMS serializable entity',
+                        null,
+                        $e
+                    );
+                }
+                break;
+            default:
+                throw new MongoException('The $item parameter must be an array, stdClass or a JMS serializable entity');
         }
 
-        if ($newobj instanceof LastUpdated) {
-            $dataAsArray['lastUpdated'] = new \MongoDate($newobj->getLastUpdated()->getTimestamp());
+        if ($newObj instanceof LastUpdated) {
+            $dataAsArray['lastUpdated'] = new \MongoDate($newObj->getLastUpdated()->getTimestamp());
         }
 
         foreach ($isoDates as $key => $value) {
