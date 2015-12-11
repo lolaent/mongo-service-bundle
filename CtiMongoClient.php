@@ -267,6 +267,112 @@ class CtiMongoClient
     }
 
     /**
+     * Insert a document into the collection.
+     *
+     * @param array|object $newObj
+     * @param array        $options
+     * @param array        $isoDates
+     *
+     * @throws MongoException
+     */
+    public function insert($newObj, array $options = array(), array $isoDates = array())
+    {
+        switch (true) {
+            case is_array($newObj):
+                $dataAsArray = $newObj;
+                break;
+            case $newObj instanceof \stdClass:
+                $json = json_encode($newObj);
+                $dataAsArray = json_decode($json);
+                break;
+            case is_object($newObj) && !($newObj instanceof \stdClass):
+                try {
+                    $serializer = SerializerBuilder::create()->build();
+                    $json = $serializer->serialize($newObj, 'json');
+                    $dataAsArray = json_decode($json, true);
+                } catch (\Exception $e) {
+                    throw new MongoException(
+                        'The $item parameter must be an array, stdClass or a JMS serializable entity',
+                        null,
+                        $e
+                    );
+                }
+                break;
+            default:
+                throw new MongoException('The $item parameter must be an array, stdClass or a JMS serializable entity');
+        }
+
+        if ($newObj instanceof LastUpdated) {
+            $dataAsArray['lastUpdated'] = new \MongoDate($newObj->getLastUpdated()->getTimestamp());
+        }
+
+        foreach ($isoDates as $key => $value) {
+            $dataAsArray[$key] = $value;
+        }
+
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $status = $this->client->getClient()
+                    ->selectDB($this->databaseName)
+                    ->selectCollection($this->collectionName)
+                    ->insert($dataAsArray, $options);
+
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(
+                        sprintf('Unable to insert to Mongo after %s retries', $this->client->getRetries()), null, $e
+                    );
+                }
+
+                $this->client->reconnect();
+            }
+        }
+    }
+
+    /**
+     * Update a document and return it.
+     *
+     * @param array      $query
+     * @param array|null $update
+     * @param array|null $fields
+     * @param array|null $options
+     *
+     * @return array
+     * @throws MongoException
+     */
+    public function findAndModify(array $query, array $update = NULL, array $fields = NULL, array $options = NULL)
+    {
+        $document = array();
+        $i = 0;
+        $retries = $this->client->getRetries();
+        while ($i <= $retries) {
+            try {
+                $document = $this->client->getClient()
+                    ->selectDB($this->databaseName)
+                    ->selectCollection($this->collectionName)
+                    ->findAndModify($query, $update, $fields, $options);
+
+                break;
+            } catch (\Exception $e) {
+                $i++;
+                if ($i >= $this->client->getRetries()) {
+                    throw new MongoException(
+                        sprintf('Unable to findAndModify in Mongo after %s retries', $this->client->getRetries()), null, $e
+                    );
+                }
+
+                $this->client->reconnect();
+            }
+        }
+
+        return $document;
+    }
+
+    /**
      * @return MongoConnectionWrapper
      */
     public function getClient()
