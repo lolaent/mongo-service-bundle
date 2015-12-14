@@ -387,7 +387,7 @@ class CtiMongoClient
                 break;
             case $obj instanceof \stdClass:
                 $json = json_encode($obj);
-                $dataAsArray = json_decode($json);
+                $dataAsArray = json_decode($json, true);
                 break;
             case is_object($obj) && !($obj instanceof \stdClass):
                 try {
