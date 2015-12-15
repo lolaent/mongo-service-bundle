@@ -243,6 +243,7 @@ class CtiMongoClient
      * @param array        $isoDates
      *
      * @throws MongoException
+     * @throws \MongoDuplicateKeyException
      */
     public function insert($newObj, array $options = array(), array $isoDates = array())
     {
@@ -258,6 +259,9 @@ class CtiMongoClient
                     ->insert($dataAsArray, $options);
 
                 break;
+            } catch (\MongoDuplicateKeyException $duplicateKeyException) {
+                // in case of duplicate key there is no need to retry the insert
+                throw $duplicateKeyException;
             } catch (\Exception $e) {
                 $i++;
                 if ($i >= $this->client->getRetries()) {
